@@ -1,0 +1,60 @@
+{
+  "format": 1,
+  "restore": {
+    "C:\\Users\\Martijn\\AppData\\Roaming\\r2modmanPlus-local\\Valheim\\profiles\\Default\\BepInEx\\plugins\\Unknown-PlaytimeTimers.dll\\src\\PlaytimeTimers.csproj": {}
+  },
+  "projects": {
+    "C:\\Users\\Martijn\\AppData\\Roaming\\r2modmanPlus-local\\Valheim\\profiles\\Default\\BepInEx\\plugins\\Unknown-PlaytimeTimers.dll\\src\\PlaytimeTimers.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\Martijn\\AppData\\Roaming\\r2modmanPlus-local\\Valheim\\profiles\\Default\\BepInEx\\plugins\\Unknown-PlaytimeTimers.dll\\src\\PlaytimeTimers.csproj",
+        "projectName": "PlaytimeTimers",
+        "projectPath": "C:\\Users\\Martijn\\AppData\\Roaming\\r2modmanPlus-local\\Valheim\\profiles\\Default\\BepInEx\\plugins\\Unknown-PlaytimeTimers.dll\\src\\PlaytimeTimers.csproj",
+        "packagesPath": "C:\\Users\\Martijn\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Martijn\\AppData\\Roaming\\r2modmanPlus-local\\Valheim\\profiles\\Default\\BepInEx\\plugins\\Unknown-PlaytimeTimers.dll\\src\\obj\\",
+        "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+        ],
+        "configFilePaths": [
+          "C:\\Users\\Martijn\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net472"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "C:\\Program Files\\dotnet\\library-packs": {},
+          "D:\\git\\BoikonToolLibrary\\BoikonToolLibrary\\bin\\Debug": {},
+          "https://api.nuget.org/v3/index.json": {},
+          "https://www.nuget.org/api/v2": {}
+        },
+        "frameworks": {
+          "net472": {
+            "targetAlias": "net472",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net472": {
+          "targetAlias": "net472",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.308\\RuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

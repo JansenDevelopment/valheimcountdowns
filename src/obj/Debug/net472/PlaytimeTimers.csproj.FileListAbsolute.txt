@@ -1,0 +1,5 @@
+C:\Users\Martijn\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\Default\BepInEx\plugins\Unknown-PlaytimeTimers.dll\src\obj\Debug\net472\PlaytimeTimers.csproj.AssemblyReference.cache
+C:\Users\Martijn\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\Default\BepInEx\plugins\Unknown-PlaytimeTimers.dll\src\obj\Debug\net472\PlaytimeTimers.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Martijn\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\Default\BepInEx\plugins\Unknown-PlaytimeTimers.dll\src\obj\Debug\net472\PlaytimeTimers.AssemblyInfoInputs.cache
+C:\Users\Martijn\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\Default\BepInEx\plugins\Unknown-PlaytimeTimers.dll\src\obj\Debug\net472\PlaytimeTimers.AssemblyInfo.cs
+C:\Users\Martijn\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\Default\BepInEx\plugins\Unknown-PlaytimeTimers.dll\src\obj\Debug\net472\PlaytimeTimers.csproj.CoreCompileInputs.cache

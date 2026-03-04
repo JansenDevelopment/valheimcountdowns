@@ -1,0 +1,9 @@
+C:\Users\Martijn\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\Default\BepInEx\plugins\Martijn-PlaytimeTimers\src\obj\Release\net472\PlaytimeTimers.csproj.AssemblyReference.cache
+C:\Users\Martijn\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\Default\BepInEx\plugins\Martijn-PlaytimeTimers\src\obj\Release\net472\PlaytimeTimers.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Martijn\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\Default\BepInEx\plugins\Martijn-PlaytimeTimers\src\obj\Release\net472\PlaytimeTimers.AssemblyInfoInputs.cache
+C:\Users\Martijn\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\Default\BepInEx\plugins\Martijn-PlaytimeTimers\src\obj\Release\net472\PlaytimeTimers.AssemblyInfo.cs
+C:\Users\Martijn\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\Default\BepInEx\plugins\Martijn-PlaytimeTimers\src\obj\Release\net472\PlaytimeTimers.csproj.CoreCompileInputs.cache
+C:\Users\Martijn\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\Default\BepInEx\plugins\Martijn-PlaytimeTimers\src\bin\Release\net472\PlaytimeTimers.dll
+C:\Users\Martijn\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\Default\BepInEx\plugins\Martijn-PlaytimeTimers\src\bin\Release\net472\PlaytimeTimers.pdb
+C:\Users\Martijn\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\Default\BepInEx\plugins\Martijn-PlaytimeTimers\src\obj\Release\net472\PlaytimeTimers.dll
+C:\Users\Martijn\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\Default\BepInEx\plugins\Martijn-PlaytimeTimers\src\obj\Release\net472\PlaytimeTimers.pdb
