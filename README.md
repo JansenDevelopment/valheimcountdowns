@@ -20,10 +20,21 @@ From this folder:
 
 If your game is installed elsewhere, pass that path to `-ValheimDir`.
 
-## Install
-The build script copies `PlaytimeTimers.dll` into this folder:
+You can also configure paths in `src/info`:
 
-`BepInEx\plugins\Martijn-PlaytimeTimers\PlaytimeTimers.dll`
+```text
+ValheimDir=D:\Program Files (x86)\Steam\steamapps\common\Valheim
+WorkDirectory=C:\Users\Martijn\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\Default\BepInEx\Unknown-PlaytimeTimers.dll
+BuildDirectory=C:\Users\Martijn\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\Default\BepInEx\plugins\Unknown-PlaytimeTimers.dll
+```
+
+`build.ps1` reads `BuildDirectory` from `src/info` and copies `PlaytimeTimers.dll` there after a successful build.
+
+## Install
+The build script copies `PlaytimeTimers.dll` to:
+
+- `BuildDirectory\PlaytimeTimers.dll` (from `src/info`), or
+- the project root if `BuildDirectory` is not set.
 
 Then launch Valheim with your normal BepInEx profile.
 

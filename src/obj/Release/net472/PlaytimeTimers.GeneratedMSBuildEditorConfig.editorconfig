@@ -1,6 +1,6 @@
 is_global = true
 build_property.RootNamespace = Martijn.PlaytimeTimers
-build_property.ProjectDir = C:\Users\Martijn\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\Default\BepInEx\plugins\Martijn-PlaytimeTimers\src\
+build_property.ProjectDir = C:\Users\Martijn\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\Default\BepInEx\Unknown-PlaytimeTimers.dll\src\
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = 
 build_property.CsWinRTUseWindowsUIXamlProjections = false

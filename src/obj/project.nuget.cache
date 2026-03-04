@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "cG+QU71iflk=",
+  "dgSpecHash": "Fr/8Y5OTXeA=",
   "success": true,
-  "projectFilePath": "C:\\Users\\Martijn\\AppData\\Roaming\\r2modmanPlus-local\\Valheim\\profiles\\Default\\BepInEx\\plugins\\Unknown-PlaytimeTimers.dll\\src\\PlaytimeTimers.csproj",
+  "projectFilePath": "C:\\Users\\Martijn\\AppData\\Roaming\\r2modmanPlus-local\\Valheim\\profiles\\Default\\BepInEx\\Unknown-PlaytimeTimers.dll\\src\\PlaytimeTimers.csproj",
   "expectedPackageFiles": [],
   "logs": []
 }

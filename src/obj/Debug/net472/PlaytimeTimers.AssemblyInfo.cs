@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("PlaytimeTimers")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+02731609d994a8a62123c1a73680ba9d7a55f68f")]
 [assembly: System.Reflection.AssemblyProductAttribute("PlaytimeTimers")]
 [assembly: System.Reflection.AssemblyTitleAttribute("PlaytimeTimers")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

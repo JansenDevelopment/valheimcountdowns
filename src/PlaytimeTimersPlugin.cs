@@ -16,22 +16,30 @@ public class PlaytimeTimersPlugin : BaseUnityPlugin
 {
     public const string PluginGuid = "martijn.playtimetimers";
     public const string PluginName = "Playtime Timers";
-    public const string PluginVersion = "1.2.0";
+    public const string PluginVersion = "1.3.0";
 
     private const float SaveIntervalSeconds = 10f;
+    private const int HudWindowId = 872641;
 
     private readonly List<PlayTimer> _timers = new();
 
     private ConfigEntry<KeyboardShortcut> _toggleWindowKey = null!;
     private ConfigEntry<string> _serializedTimers = null!;
-    private ConfigEntry<bool> _pauseWhenGamePaused = null!;
     private ConfigEntry<bool> _autoStartRoyalJellyOnMineExit = null!;
     private ConfigEntry<bool> _showHudWhenMenuClosed = null!;
+    private ConfigEntry<bool> _hudMovable = null!;
+    private ConfigEntry<bool> _showHudBackground = null!;
+    private ConfigEntry<float> _hudBackgroundOpacity = null!;
+    private ConfigEntry<float> _hudPositionX = null!;
+    private ConfigEntry<float> _hudPositionY = null!;
 
     private Rect _windowRect = new(200f, 120f, 560f, 480f);
+    private Rect _hudRect = new(20f, 20f, 440f, 300f);
     private Vector2 _scrollPosition;
     private bool _showWindow;
     private float _saveAccumulator;
+    private bool _isInGameplayWorld;
+    private List<PlayTimer> _hudVisibleTimers = new();
 
     private string _newTimerName = "New Timer";
     private string _newTimerMinutes = "20";
@@ -50,10 +58,19 @@ public class PlaytimeTimersPlugin : BaseUnityPlugin
     private void Awake()
     {
         _toggleWindowKey = Config.Bind("General", "Toggle Window", new KeyboardShortcut(KeyCode.F8), "Open/close timer window.");
-        _pauseWhenGamePaused = Config.Bind("General", "Pause When Game Paused", true, "If true, countdown pauses when Time.timeScale <= 0.");
         _autoStartRoyalJellyOnMineExit = Config.Bind("General", "Auto Start Royal Jelly On Mine Exit", true, "Automatically adds/starts a 4h Royal Jelly timer for an Infested Mine location when you leave it (no duplicate location timers).");
         _showHudWhenMenuClosed = Config.Bind("General", "Show HUD When Menu Closed", true, "Show running timers on HUD while the F8 timer menu is closed.");
+        _hudMovable = Config.Bind("General", "HUD Movable", false, "Allow dragging the HUD. If disabled, HUD stays at top-left.");
+        _showHudBackground = Config.Bind("General", "HUD Show Background", true, "Show a background panel behind the HUD text.");
+        _hudBackgroundOpacity = Config.Bind("General", "HUD Background Opacity", 0.45f, new ConfigDescription("HUD background opacity (0 = transparent, 1 = solid).", new AcceptableValueRange<float>(0f, 1f)));
+        _hudPositionX = Config.Bind("General", "HUD Position X", 20f, "HUD position X in pixels.");
+        _hudPositionY = Config.Bind("General", "HUD Position Y", 20f, "HUD position Y in pixels.");
         _serializedTimers = Config.Bind("Storage", "Timers", string.Empty, "Internal timer storage. Do not edit manually.");
+
+        _hudRect.x = Mathf.Max(0f, _hudPositionX.Value);
+        _hudRect.y = Mathf.Max(0f, _hudPositionY.Value);
+        _hudBackgroundOpacity.Value = Mathf.Clamp01(_hudBackgroundOpacity.Value);
+        ClampHudRectToScreen();
 
         LoadTimers();
         Logger.LogInfo($"{PluginName} {PluginVersion} loaded. Press {_toggleWindowKey.Value} to open timer UI.");
@@ -76,11 +93,21 @@ public class PlaytimeTimersPlugin : BaseUnityPlugin
             _showWindow = !_showWindow;
         }
 
-        HandleAutoStartRoyalJellyTimer();
+        var inMainMenu = IsMainMenuScene();
+        var worldSeconds = 0d;
+        var hasWorldTime = !inMainMenu && TryGetWorldTimeSeconds(out worldSeconds);
+        _isInGameplayWorld = !inMainMenu && (hasWorldTime || HasLocalPlayer());
 
-        var delta = GetCountdownDelta();
-        var hasWorldTime = TryGetWorldTimeSeconds(out var worldSeconds);
-        if (delta > 0f || hasWorldTime)
+        if (_isInGameplayWorld)
+        {
+            HandleAutoStartRoyalJellyTimer();
+        }
+        else
+        {
+            ResetMineTracking();
+        }
+
+        if (hasWorldTime)
         {
             foreach (var timer in _timers)
             {
@@ -89,21 +116,17 @@ public class PlaytimeTimersPlugin : BaseUnityPlugin
                     continue;
                 }
 
-                if (timer.UseWorldClock && hasWorldTime)
+                if (!timer.UseWorldClock)
                 {
-                    var elapsed = worldSeconds - timer.WorldStartSeconds;
-                    if (elapsed < 0d)
-                    {
-                        timer.WorldStartSeconds = worldSeconds;
-                        elapsed = 0d;
-                    }
+                    timer.UseWorldClock = true;
+                }
 
-                    timer.RemainingSeconds = Mathf.Max(0f, timer.DurationSeconds - (float)elapsed);
-                }
-                else if (delta > 0f)
+                if (timer.WorldTargetSeconds <= 0d)
                 {
-                    timer.RemainingSeconds = Mathf.Max(0f, timer.RemainingSeconds - delta);
+                    timer.WorldTargetSeconds = worldSeconds + timer.RemainingSeconds;
                 }
+
+                timer.RemainingSeconds = Mathf.Max(0f, (float)(timer.WorldTargetSeconds - worldSeconds));
 
                 if (timer.RemainingSeconds <= 0f)
                 {
@@ -125,16 +148,6 @@ public class PlaytimeTimersPlugin : BaseUnityPlugin
         }
     }
 
-    private float GetCountdownDelta()
-    {
-        if (_pauseWhenGamePaused.Value && Time.timeScale <= 0.001f)
-        {
-            return 0f;
-        }
-
-        return Time.unscaledDeltaTime;
-    }
-
     private void OnGUI()
     {
         if (!_showWindow)
@@ -154,7 +167,7 @@ public class PlaytimeTimersPlugin : BaseUnityPlugin
     {
         GUILayout.BeginVertical();
 
-        GUILayout.Label("Countdown timers use server/world time when available. Sleep won't speed them up.");
+        GUILayout.Label("Timers store a server/world-time target and compare against current server/world time.");
 
         _scrollPosition = GUILayout.BeginScrollView(_scrollPosition, GUILayout.Height(260));
         foreach (var timer in _timers.ToList())
@@ -162,7 +175,7 @@ public class PlaytimeTimersPlugin : BaseUnityPlugin
             GUILayout.BeginVertical("box");
             GUILayout.Label($"{timer.Name}");
             GUILayout.Label($"Remaining: {FormatTime(timer.RemainingSeconds)} / {FormatTime(timer.DurationSeconds)}");
-            GUILayout.Label(timer.UseWorldClock ? "Clock: Server/World" : "Clock: Local Real-Time");
+            GUILayout.Label(timer.UseWorldClock ? "Clock: Server/World (timestamp)" : "Clock: Waiting for world time");
 
             GUILayout.BeginHorizontal();
             if (GUILayout.Button(timer.IsRunning ? "Pause" : "Start", GUILayout.Width(80)))
@@ -188,15 +201,25 @@ public class PlaytimeTimersPlugin : BaseUnityPlugin
                 timer.RemainingSeconds = timer.DurationSeconds;
                 timer.IsRunning = false;
                 timer.HasFinishedNotification = false;
+                timer.WorldTargetSeconds = 0d;
             }
 
             if (GUILayout.Button("+1m", GUILayout.Width(80)))
             {
                 timer.DurationSeconds += 60f;
                 timer.RemainingSeconds += 60f;
-                if (timer.IsRunning && timer.UseWorldClock && TryGetWorldTimeSeconds(out var worldNowPlus))
+                if (timer.IsRunning)
                 {
-                    timer.WorldStartSeconds = worldNowPlus - (timer.DurationSeconds - timer.RemainingSeconds);
+                    if (timer.WorldTargetSeconds > 0d)
+                    {
+                        timer.WorldTargetSeconds += 60d;
+                    }
+                    else if (TryGetWorldTimeSeconds(out var worldNowPlus))
+                    {
+                        timer.UseWorldClock = true;
+                        timer.WorldStartSeconds = worldNowPlus;
+                        timer.WorldTargetSeconds = worldNowPlus + timer.RemainingSeconds;
+                    }
                 }
                 timer.HasFinishedNotification = false;
             }
@@ -220,6 +243,34 @@ public class PlaytimeTimersPlugin : BaseUnityPlugin
         GUILayout.Label("Create Timer");
 
         _showHudWhenMenuClosed.Value = GUILayout.Toggle(_showHudWhenMenuClosed.Value, "Show HUD when menu is closed");
+        var hudMovable = GUILayout.Toggle(_hudMovable.Value, "Allow moving HUD");
+        if (hudMovable != _hudMovable.Value)
+        {
+            _hudMovable.Value = hudMovable;
+            if (!_hudMovable.Value)
+            {
+                _hudRect.x = 20f;
+                _hudRect.y = 20f;
+                SaveHudPosition();
+            }
+        }
+        _showHudBackground.Value = GUILayout.Toggle(_showHudBackground.Value, "Show HUD background panel");
+
+        GUILayout.BeginHorizontal();
+        GUILayout.Label($"HUD opacity: {Mathf.RoundToInt(_hudBackgroundOpacity.Value * 100f)}%", GUILayout.Width(180));
+        var hudOpacity = GUILayout.HorizontalSlider(_hudBackgroundOpacity.Value, 0f, 1f, GUILayout.Width(180));
+        if (Math.Abs(hudOpacity - _hudBackgroundOpacity.Value) > 0.001f)
+        {
+            _hudBackgroundOpacity.Value = Mathf.Clamp01(hudOpacity);
+        }
+
+        if (GUILayout.Button("Reset HUD Pos", GUILayout.Width(120)))
+        {
+            _hudRect.x = 20f;
+            _hudRect.y = 20f;
+            SaveHudPosition();
+        }
+        GUILayout.EndHorizontal();
 
         GUILayout.BeginHorizontal();
         GUILayout.Label("Name", GUILayout.Width(60));
@@ -359,6 +410,15 @@ public class PlaytimeTimersPlugin : BaseUnityPlugin
             }
             var isRoyalAuto = parts.Length > 6 && parts[6] == "1";
             var locationKey = parts.Length > 7 ? DecodeName(parts[7]) : string.Empty;
+            var worldTargetSeconds = 0d;
+            if (parts.Length > 8)
+            {
+                double.TryParse(parts[8], NumberStyles.Float, CultureInfo.InvariantCulture, out worldTargetSeconds);
+            }
+            else if (useWorldClock && worldStartSeconds > 0d)
+            {
+                worldTargetSeconds = worldStartSeconds + Mathf.Max(1f, duration);
+            }
 
             _timers.Add(new PlayTimer
             {
@@ -369,6 +429,7 @@ public class PlaytimeTimersPlugin : BaseUnityPlugin
                 HasFinishedNotification = remaining <= 0f,
                 UseWorldClock = useWorldClock,
                 WorldStartSeconds = worldStartSeconds,
+                WorldTargetSeconds = worldTargetSeconds,
                 IsRoyalJellyAuto = isRoyalAuto,
                 LocationKey = locationKey
             });
@@ -386,7 +447,8 @@ public class PlaytimeTimersPlugin : BaseUnityPlugin
             timer.UseWorldClock ? "1" : "0",
             timer.WorldStartSeconds.ToString("0.###", CultureInfo.InvariantCulture),
             timer.IsRoyalJellyAuto ? "1" : "0",
-            EncodeName(timer.LocationKey)
+            EncodeName(timer.LocationKey),
+            timer.WorldTargetSeconds.ToString("0.###", CultureInfo.InvariantCulture)
         }));
 
         _serializedTimers.Value = string.Join(";;", lines);
@@ -432,6 +494,7 @@ public class PlaytimeTimersPlugin : BaseUnityPlugin
         public bool HasFinishedNotification;
         public bool UseWorldClock;
         public double WorldStartSeconds;
+        public double WorldTargetSeconds;
         public bool IsRoyalJellyAuto;
         public string LocationKey = string.Empty;
     }
@@ -440,15 +503,12 @@ public class PlaytimeTimersPlugin : BaseUnityPlugin
     {
         timer.IsRunning = true;
         timer.HasFinishedNotification = false;
+        timer.UseWorldClock = true;
 
         if (TryGetWorldTimeSeconds(out var worldNow))
         {
-            timer.UseWorldClock = true;
-            timer.WorldStartSeconds = worldNow - (timer.DurationSeconds - timer.RemainingSeconds);
-        }
-        else
-        {
-            timer.UseWorldClock = false;
+            timer.WorldStartSeconds = worldNow;
+            timer.WorldTargetSeconds = worldNow + timer.RemainingSeconds;
         }
     }
 
@@ -461,10 +521,26 @@ public class PlaytimeTimersPlugin : BaseUnityPlugin
 
         var inInterior = IsPlayerInInterior();
         var sceneName = SceneManager.GetActiveScene().name;
-        if (inInterior && LooksLikeInfestedMineScene(sceneName))
+        var environmentName = string.Empty;
+        var hasEnvironmentName = TryGetCurrentEnvironmentName(out environmentName);
+
+        var mineByScene = LooksLikeInfestedMineScene(sceneName);
+        var mineByEnvironment = hasEnvironmentName && LooksLikeInfestedMineScene(environmentName);
+        var inMineContext = mineByScene || mineByEnvironment || (inInterior && _insideInfestedMine);
+
+        if (inMineContext)
         {
             _insideInfestedMine = true;
-            _lastInfestedMineScene = sceneName;
+
+            var contextName = mineByScene
+                ? sceneName
+                : (mineByEnvironment ? environmentName : sceneName);
+
+            if (!string.IsNullOrWhiteSpace(contextName))
+            {
+                _lastInfestedMineScene = contextName;
+            }
+
             if (TryGetPlayerWorldPosition(out var playerPosition))
             {
                 _lastInfestedMinePosition = playerPosition;
@@ -472,7 +548,7 @@ public class PlaytimeTimersPlugin : BaseUnityPlugin
             }
         }
 
-        if (!inInterior && _lastInInterior && _insideInfestedMine)
+        if (!inMineContext && _insideInfestedMine)
         {
             AddAutoRoyalJellyTimerForLocation();
             _insideInfestedMine = false;
@@ -480,12 +556,15 @@ public class PlaytimeTimersPlugin : BaseUnityPlugin
             _hasLastInfestedMinePosition = false;
         }
 
-        if (!inInterior)
-        {
-            _insideInfestedMine = false;
-        }
-
         _lastInInterior = inInterior;
+    }
+
+    private void ResetMineTracking()
+    {
+        _insideInfestedMine = false;
+        _lastInInterior = false;
+        _lastInfestedMineScene = string.Empty;
+        _hasLastInfestedMinePosition = false;
     }
 
     private static bool LooksLikeInfestedMineScene(string sceneName)
@@ -496,7 +575,58 @@ public class PlaytimeTimersPlugin : BaseUnityPlugin
         }
 
         var text = sceneName.ToLowerInvariant();
-        return text.Contains("infested") || text.Contains("mine") || text.Contains("dvergr");
+        return text.Contains("infested") || text.Contains("infected") || text.Contains("mine") || text.Contains("dvergr");
+    }
+
+    private static bool TryGetCurrentEnvironmentName(out string environmentName)
+    {
+        environmentName = string.Empty;
+
+        try
+        {
+            var envManType = Type.GetType("EnvMan, Assembly-CSharp");
+            if (envManType == null)
+            {
+                return false;
+            }
+
+            var instanceProperty = envManType.GetProperty("instance", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+            var instanceField = envManType.GetField("instance", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+            var envManInstance = instanceProperty?.GetValue(null) ?? instanceField?.GetValue(null);
+            if (envManInstance == null)
+            {
+                return false;
+            }
+
+            var getCurrentEnvironmentMethod = envManType.GetMethod("GetCurrentEnvironment", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            var currentEnvironment = getCurrentEnvironmentMethod?.Invoke(envManInstance, null);
+            if (currentEnvironment == null)
+            {
+                return false;
+            }
+
+            var envType = currentEnvironment.GetType();
+            var nameField = envType.GetField("m_name", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            if (nameField?.GetValue(currentEnvironment) is string fieldName && !string.IsNullOrWhiteSpace(fieldName))
+            {
+                environmentName = fieldName;
+                return true;
+            }
+
+            var nameProperty = envType.GetProperty("m_name", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+                              ?? envType.GetProperty("name", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            if (nameProperty?.GetValue(currentEnvironment) is string propertyName && !string.IsNullOrWhiteSpace(propertyName))
+            {
+                environmentName = propertyName;
+                return true;
+            }
+        }
+        catch
+        {
+            return false;
+        }
+
+        return false;
     }
 
     private void AddAutoRoyalJellyTimerForLocation()
@@ -549,23 +679,77 @@ public class PlaytimeTimersPlugin : BaseUnityPlugin
 
     private void DrawHudOverlay()
     {
-        var visibleTimers = _timers.Where(t => t.IsRunning && t.RemainingSeconds > 0f).ToList();
-        if (visibleTimers.Count == 0)
+        if (!_isInGameplayWorld)
         {
             return;
         }
 
-        GUILayout.BeginArea(new Rect(20f, 20f, 440f, 300f), GUI.skin.box);
+        _hudVisibleTimers = _timers.ToList();
+        if (_hudVisibleTimers.Count == 0)
+        {
+            return;
+        }
+
+        if (!_hudMovable.Value)
+        {
+            _hudRect.x = 20f;
+            _hudRect.y = 20f;
+        }
+
+        ClampHudRectToScreen();
+
+        var previousColor = GUI.color;
+        var hudStyle = _showHudBackground.Value ? GUI.skin.window : GUIStyle.none;
+        if (_showHudBackground.Value)
+        {
+            var alpha = Mathf.Clamp01(_hudBackgroundOpacity.Value);
+            GUI.color = new Color(previousColor.r, previousColor.g, previousColor.b, alpha);
+        }
+
+        var previousPosition = new Vector2(_hudRect.x, _hudRect.y);
+        _hudRect = GUILayout.Window(HudWindowId, _hudRect, DrawHudWindow, string.Empty, hudStyle);
+        GUI.color = previousColor;
+
+        if (Mathf.Abs(previousPosition.x - _hudRect.x) > 0.1f || Mathf.Abs(previousPosition.y - _hudRect.y) > 0.1f)
+        {
+            SaveHudPosition();
+        }
+    }
+
+    private void DrawHudWindow(int id)
+    {
+        var previousColor = GUI.color;
+        GUI.color = new Color(previousColor.r, previousColor.g, previousColor.b, 1f);
+
         GUILayout.Label("Playtime Timers");
 
-        foreach (var timer in visibleTimers)
+        foreach (var timer in _hudVisibleTimers)
         {
-            var clockText = timer.UseWorldClock ? "Server" : "Local";
-            var status = timer.IsRunning ? "Running" : "Paused";
+            var clockText = timer.UseWorldClock ? "Server" : "Waiting";
+            var status = timer.RemainingSeconds <= 0f ? "Finished" : (timer.IsRunning ? "Running" : "Paused");
             GUILayout.Label($"{timer.Name}: {FormatTime(timer.RemainingSeconds)} ({clockText}, {status})");
         }
 
-        GUILayout.EndArea();
+        GUI.color = previousColor;
+        if (_hudMovable.Value)
+        {
+            GUI.DragWindow(new Rect(0f, 0f, 10000f, 10000f));
+        }
+    }
+
+    private void SaveHudPosition()
+    {
+        ClampHudRectToScreen();
+        _hudPositionX.Value = _hudRect.x;
+        _hudPositionY.Value = _hudRect.y;
+    }
+
+    private void ClampHudRectToScreen()
+    {
+        var maxX = Mathf.Max(0f, Screen.width - _hudRect.width);
+        var maxY = Mathf.Max(0f, Screen.height - _hudRect.height);
+        _hudRect.x = Mathf.Clamp(_hudRect.x, 0f, maxX);
+        _hudRect.y = Mathf.Clamp(_hudRect.y, 0f, maxY);
     }
 
     private static bool TryGetPlayerWorldPosition(out Vector3 position)
@@ -574,15 +758,7 @@ public class PlaytimeTimersPlugin : BaseUnityPlugin
 
         try
         {
-            var playerType = Type.GetType("Player, Assembly-CSharp");
-            if (playerType == null)
-            {
-                return false;
-            }
-
-            var localPlayerField = playerType.GetField("m_localPlayer", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
-            var localPlayer = localPlayerField?.GetValue(null);
-            if (localPlayer == null)
+            if (!TryGetLocalPlayer(out var localPlayer))
             {
                 return false;
             }
@@ -612,19 +788,12 @@ public class PlaytimeTimersPlugin : BaseUnityPlugin
     {
         try
         {
-            var playerType = Type.GetType("Player, Assembly-CSharp");
-            if (playerType == null)
+            if (!TryGetLocalPlayer(out var localPlayer))
             {
                 return false;
             }
 
-            var localPlayerField = playerType.GetField("m_localPlayer", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
-            var localPlayer = localPlayerField?.GetValue(null);
-            if (localPlayer == null)
-            {
-                return false;
-            }
-
+            var playerType = localPlayer.GetType();
             var inInteriorMethod = playerType.GetMethod("InInterior", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
             if (inInteriorMethod == null)
             {
@@ -696,6 +865,67 @@ public class PlaytimeTimersPlugin : BaseUnityPlugin
         }
 
         return false;
+    }
+
+    private static bool HasLocalPlayer()
+    {
+        return TryGetLocalPlayer(out _);
+    }
+
+    private static bool TryGetLocalPlayer(out object localPlayer)
+    {
+        localPlayer = null!;
+
+        try
+        {
+            var playerType = Type.GetType("Player, Assembly-CSharp");
+            if (playerType == null)
+            {
+                return false;
+            }
+
+            var localPlayerField = playerType.GetField("m_localPlayer", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+            localPlayer = localPlayerField?.GetValue(null)!;
+            if (localPlayer != null)
+            {
+                return true;
+            }
+
+            var localPlayerProperty = playerType.GetProperty("m_localPlayer", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)
+                                   ?? playerType.GetProperty("localPlayer", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+            localPlayer = localPlayerProperty?.GetValue(null)!;
+            if (localPlayer != null)
+            {
+                return true;
+            }
+
+            var localPlayerMethod = playerType.GetMethod("GetLocalPlayer", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static, null, Type.EmptyTypes, null);
+            localPlayer = localPlayerMethod?.Invoke(null, null)!;
+            return localPlayer != null;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static bool IsMainMenuScene()
+    {
+        try
+        {
+            var sceneName = SceneManager.GetActiveScene().name;
+            if (string.IsNullOrWhiteSpace(sceneName))
+            {
+                return true;
+            }
+
+            var text = sceneName.Trim().ToLowerInvariant();
+            return text == "start" || text.Contains("menu");
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     private static bool TryConvertToDouble(object? value, out double result)

@@ -9,16 +9,20 @@
   </PropertyGroup>
 
   <PropertyGroup>
+    <ValheimInfoFile>$(MSBuildProjectDirectory)\info</ValheimInfoFile>
+    <ValheimDirFromInfo Condition="'$(ValheimDir)' == '' and Exists('$(ValheimInfoFile)')">$([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText('$(ValheimInfoFile)')), '(?m)^ValheimDir=(.*)$').Groups[1].Value)</ValheimDirFromInfo>
+    <ValheimDirFromInfo Condition="'$(ValheimDirFromInfo)' != ''">$([System.String]::Copy('$(ValheimDirFromInfo)').Trim())</ValheimDirFromInfo>
+    <ValheimDir Condition="'$(ValheimDir)' == '' and '$(ValheimDirFromInfo)' != ''">$(ValheimDirFromInfo)</ValheimDir>
     <ValheimDir Condition="'$(ValheimDir)' == ''">C:\Program Files (x86)\Steam\steamapps\common\Valheim</ValheimDir>
   </PropertyGroup>
 
   <ItemGroup>
     <Reference Include="BepInEx">
-      <HintPath>..\..\..\core\BepInEx.dll</HintPath>
+      <HintPath>..\..\core\BepInEx.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="0Harmony">
-      <HintPath>..\..\..\core\0Harmony.dll</HintPath>
+      <HintPath>..\..\core\0Harmony.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine">

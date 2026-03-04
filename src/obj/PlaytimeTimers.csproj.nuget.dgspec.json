@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Martijn\\AppData\\Roaming\\r2modmanPlus-local\\Valheim\\profiles\\Default\\BepInEx\\plugins\\Unknown-PlaytimeTimers.dll\\src\\PlaytimeTimers.csproj": {}
+    "C:\\Users\\Martijn\\AppData\\Roaming\\r2modmanPlus-local\\Valheim\\profiles\\Default\\BepInEx\\Unknown-PlaytimeTimers.dll\\src\\PlaytimeTimers.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Martijn\\AppData\\Roaming\\r2modmanPlus-local\\Valheim\\profiles\\Default\\BepInEx\\plugins\\Unknown-PlaytimeTimers.dll\\src\\PlaytimeTimers.csproj": {
+    "C:\\Users\\Martijn\\AppData\\Roaming\\r2modmanPlus-local\\Valheim\\profiles\\Default\\BepInEx\\Unknown-PlaytimeTimers.dll\\src\\PlaytimeTimers.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Martijn\\AppData\\Roaming\\r2modmanPlus-local\\Valheim\\profiles\\Default\\BepInEx\\plugins\\Unknown-PlaytimeTimers.dll\\src\\PlaytimeTimers.csproj",
+        "projectUniqueName": "C:\\Users\\Martijn\\AppData\\Roaming\\r2modmanPlus-local\\Valheim\\profiles\\Default\\BepInEx\\Unknown-PlaytimeTimers.dll\\src\\PlaytimeTimers.csproj",
         "projectName": "PlaytimeTimers",
-        "projectPath": "C:\\Users\\Martijn\\AppData\\Roaming\\r2modmanPlus-local\\Valheim\\profiles\\Default\\BepInEx\\plugins\\Unknown-PlaytimeTimers.dll\\src\\PlaytimeTimers.csproj",
+        "projectPath": "C:\\Users\\Martijn\\AppData\\Roaming\\r2modmanPlus-local\\Valheim\\profiles\\Default\\BepInEx\\Unknown-PlaytimeTimers.dll\\src\\PlaytimeTimers.csproj",
         "packagesPath": "C:\\Users\\Martijn\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Martijn\\AppData\\Roaming\\r2modmanPlus-local\\Valheim\\profiles\\Default\\BepInEx\\plugins\\Unknown-PlaytimeTimers.dll\\src\\obj\\",
+        "outputPath": "C:\\Users\\Martijn\\AppData\\Roaming\\r2modmanPlus-local\\Valheim\\profiles\\Default\\BepInEx\\Unknown-PlaytimeTimers.dll\\src\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
